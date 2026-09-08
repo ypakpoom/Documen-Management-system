@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5F9;
+    --card:#FFFFFF;
+    --border:#E7EAF0;
+    --text:#1B2430;
+    --text-soft:#6B7280;
+    --text-faint:#9AA2AF;
+    --primary:#2F6FED;
+    --primary-soft:#E9F0FE;
+    --sidebar:#0F1B2E;
+    --sidebar-text:#93A0B7;
+    --sidebar-active:#2F6FED;
+    --success:#16A34A; --success-soft:#E7F7EC;
+    --warning:#F59E0B; --warning-soft:#FEF3E0;
+    --danger:#EF4444;  --danger-soft:#FDEAEA;
+    --info:#7C5CFC;    --info-soft:#EFEBFF;
+    --grey-soft:#EEF0F3;
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 2px 8px rgba(16,24,40,.06);
+    --radius:12px;
+  }
+  body.dark{
+    --bg:#0B1220;
+    --card:#111B2D;
+    --border:#233047;
+    --text:#E7ECF5;
+    --text-soft:#9AA7BD;
+    --text-faint:#6B7690;
+    --primary-soft:#152244;
+    --success-soft:#0F2A1C;
+    --warning-soft:#2B2210;
+    --danger-soft:#2C1518;
+    --info-soft:#1E1A38;
+    --grey-soft:#182234;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    transition:background .15s,color .15s;
+  }
+  *{transition:background-color .15s,border-color .15s,color .15s;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+  svg{display:block;}
+  .icon{width:18px;height:18px;flex:none;}
+  .icon-sm{width:15px;height:15px;}
+
+  #app{display:flex;min-height:100vh;}
+
+  /* ===================== Sidebar ===================== */
+  .rail{
+    width:252px; flex:none; background:var(--sidebar); color:var(--sidebar-text);
+    display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+    border-right:1px solid rgba(255,255,255,.06);
+  }
+  .rail.collapsed{width:76px;}
+  .rail.collapsed .rail-label, .rail.collapsed .rail-brand-text, .rail.collapsed .rail-foot-text,
+  .rail.collapsed .rail-section-label, .rail.collapsed .iso-select-wrap{display:none;}
+  .rail.collapsed .rail-item{justify-content:center;}
+  .rail.collapsed .rail-brand{justify-content:center;}
+
+  .rail-brand{
+    display:flex;align-items:center;gap:11px;
+    padding:19px 18px; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .rail-brand .mark{
+    width:38px;height:38px;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,var(--primary),#5B8CFF);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+  }
+  .rail-brand-text h1{margin:0;font-size:15px;font-weight:700;color:#fff;letter-spacing:.2px;}
+  .rail-brand-text p{margin:1px 0 0;font-size:11px;color:var(--sidebar-text);}
+
+  .iso-select-wrap{padding:12px 16px 6px;}
+  .iso-select{
+    width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    color:#fff;padding:9px 10px;font-size:12.5px;border-radius:8px;font-family:inherit;
+  }
+  .iso-select option{color:#1B2430;}
+
+  .rail-nav{padding:6px 12px;flex:1;overflow-y:auto;}
+  .rail-section-label{
+    font-size:10.5px;color:#5C6A85;text-transform:uppercase;letter-spacing:.6px;
+    padding:14px 10px 6px;
+  }
+  .rail-item{
+    display:flex;align-items:center;gap:12px;
+    padding:9px 11px;border-radius:8px;font-size:13.5px;font-weight:500;
+    color:var(--sidebar-text);margin-bottom:2px;white-space:nowrap;
+  }
+  .rail-item .icon{color:#7E8AA3;}
+  .rail-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .rail-item:hover .icon{color:#fff;}
+  .rail-item.active{background:var(--sidebar-active);color:#fff;
+    box-shadow:0 4px 10px rgba(47,111,237,.35);}
+  .rail-item.active .icon{color:#fff;}
+
+  .rail-foot{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.08);}
+  .rail-collapse-btn{
+    display:flex;align-items:center;gap:10px;width:100%;
+    background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--sidebar-text);
+    padding:9px 11px;border-radius:8px;font-size:12.5px;margin-bottom:10px;
+  }
+  .rail-collapse-btn:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .rail-collapse-btn .icon{transition:transform .15s;}
+  .rail.collapsed .rail-collapse-btn .icon{transform:rotate(180deg);}
+  .rail-foot-text{font-size:10.5px;color:#4E5A73;line-height:1.5;}
+
+  /* ===================== Main ===================== */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+  .topbar{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 26px;background:var(--card);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:20;
+  }
+  .icon-btn{
+    width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+    background:var(--card);display:flex;align-items:center;justify-content:center;
+    color:var(--text-soft);position:relative;flex:none;
+  }
+  .icon-btn:hover{background:var(--grey-soft);color:var(--text);}
+  .icon-btn .badge{
+    position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;
+    border-radius:8px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;border:2px solid var(--card);
+  }
+
+  .search-wrap{
+    flex:1;max-width:460px;display:flex;align-items:center;gap:9px;
+    background:var(--grey-soft);border:1px solid var(--border);border-radius:10px;
+    padding:8px 12px;color:var(--text-soft);
+  }
+  .search-wrap input{
+    border:none;background:transparent;outline:none;flex:1;font-size:13px;color:var(--text);
+  }
+  .search-wrap input::placeholder{color:var(--text-faint);}
+  .kbd{
+    font-size:10.5px;color:var(--text-faint);border:1px solid var(--border);
+    border-radius:5px;padding:2px 6px;background:var(--card);flex:none;
+  }
+
+  .topbar-spacer{flex:1;}
+
+  .lang-toggle{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none;}
+  .lang-toggle button{background:var(--card);border:none;padding:8px 12px;font-size:12px;font-weight:700;color:var(--text-soft);}
+  .lang-toggle button.active{background:var(--primary);color:#fff;}
+
+  .avatar-block{display:flex;align-items:center;gap:10px;flex:none;padding-left:6px;}
+  .avatar{
+    width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#5B8CFF);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;
+  }
+  .avatar-name{font-size:13px;font-weight:600;line-height:1.2;}
+  .avatar-role{font-size:11px;color:var(--text-soft);}
+
+  .content{padding:24px 26px 60px;}
+
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap;}
+  .page-head h2{margin:0 0 4px;font-size:23px;font-weight:800;letter-spacing:.2px;}
+  .page-head .sub{font-size:13px;color:var(--text-soft);}
+  .page-meta{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--text-soft);flex:none;}
+  .page-meta .mi{display:flex;align-items:center;gap:6px;}
+
+  /* ===================== Stat cards ===================== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  .stat-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;
+  }
+  .stat-top{display:flex;align-items:flex-start;justify-content:space-between;}
+  .stat-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .stat-icon.blue{background:var(--primary-soft);color:var(--primary);}
+  .stat-icon.green{background:var(--success-soft);color:var(--success);}
+  .stat-icon.orange{background:var(--warning-soft);color:var(--warning);}
+  .stat-icon.red{background:var(--danger-soft);color:var(--danger);}
+  .stat-label{font-size:12.5px;color:var(--text-soft);}
+  .stat-value{font-size:26px;font-weight:800;}
+  .stat-trend{font-size:11.5px;color:var(--text-faint);}
+  .stat-trend b{font-weight:700;}
+  .stat-trend.up b{color:var(--success);}
+  .stat-trend.down b{color:var(--danger);}
+
+  /* ===================== Filter + table card ===================== */
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+  .panel-head h3{margin:0;font-size:14.5px;font-weight:700;}
+  .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  select.sel{
+    border:1px solid var(--border);background:var(--card);color:var(--text);
+    padding:8px 10px;font-size:12.5px;border-radius:8px;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    border:1px solid var(--primary);background:var(--primary);color:#fff;
+    padding:9px 15px;font-size:13px;font-weight:600;border-radius:9px;
+  }
+  .btn:hover{background:#2559C7;}
+  .btn.ghost{background:var(--card);color:var(--text);border-color:var(--border);}
+  .btn.ghost:hover{background:var(--grey-soft);}
+  .btn.danger{background:var(--danger);border-color:var(--danger);}
+  .btn.danger:hover{background:#D63A3A;}
+  .btn.sm{padding:7px 12px;font-size:12px;}
+
+  table{width:100%;border-collapse:collapse;}
+  thead th{
+    text-align:left;font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.4px;
+    padding:11px 16px;border-bottom:1px solid var(--border);background:var(--grey-soft);font-weight:700;
+  }
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--grey-soft);}
+
+  .doc-code{font-size:11.5px;color:var(--text-soft);font-family:monospace;}
+  .doc-title{font-weight:600;}
+  .doc-title .sec{display:block;font-weight:400;font-size:11.5px;color:var(--text-faint);margin-top:1px;}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
+    font-size:11.5px;font-weight:700;
+  }
+  .pill.approved{background:var(--success-soft);color:var(--success);}
+  .pill.review{background:var(--warning-soft);color:var(--warning);}
+  .pill.draft{background:var(--grey-soft);color:var(--text-soft);}
+  .pill.expired{background:var(--danger-soft);color:var(--danger);}
+  .pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+  .row-actions .icon-btn{width:30px;height:30px;border-radius:7px;}
+
+  .confirm-row{background:var(--danger-soft);}
+  .confirm-row td{padding:11px 16px;}
+  .confirm-box{display:flex;align-items:center;gap:10px;justify-content:flex-end;font-size:12.5px;color:var(--danger);font-weight:600;}
+
+  .empty{padding:56px 20px;text-align:center;color:var(--text-soft);}
+  .empty .icon{width:34px;height:34px;margin:0 auto 10px;color:var(--text-faint);}
+
+  .panel-foot{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-soft);}
+
+  /* ===================== Placeholder module page ===================== */
+  .placeholder{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:70px 30px;text-align:center;
+  }
+  .placeholder .icon-wrap{
+    width:64px;height:64px;border-radius:16px;background:var(--primary-soft);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
+  }
+  .placeholder .icon-wrap .icon{width:30px;height:30px;}
+  .placeholder h3{margin:0 0 8px;font-size:17px;font-weight:700;}
+  .placeholder p{margin:0 0 20px;color:var(--text-soft);font-size:13.5px;max-width:420px;margin-left:auto;margin-right:auto;}
+
+  /* ===================== Modal ===================== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(15,27,46,.5);
+    display:flex;align-items:flex-start;justify-content:center;padding:50px 20px;z-index:100;overflow-y:auto;
+  }
+  .modal{background:var(--card);border-radius:14px;width:100%;max-width:640px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;}
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;}
+  .modal-head h3{margin:0;font-size:16.5px;font-weight:700;flex:1;}
+  .modal-body{padding:20px 22px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-grid .full{grid-column:1/-1;}
+  .field label{display:block;font-size:11.5px;color:var(--text-soft);margin-bottom:5px;font-weight:600;}
+  .field input,.field select{
+    width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);
+    padding:9px 11px;font-size:13px;border-radius:8px;font-family:inherit;
+  }
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+  @media(max-width:980px){
+    .rail{position:fixed;left:-252px;transition:left .2s;z-index:60;}
+    .rail.open{left:0;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .content{padding:16px;}
+    .topbar{padding:12px 16px;flex-wrap:wrap;}
+    .search-wrap{order:3;max-width:none;width:100%;}
+    table{display:block;overflow-x:auto;}
+    .avatar-name,.avatar-role{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   ICONS — tiny hand-rolled feather-style outline set
+============================================================ */
+const ICONS = {
+  menu:'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>',
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  fileText:'<rect x="5" y="3" width="14" height="18" rx="1.5"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>',
+  shield:'<path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3z"/>',
+  shieldCheck:'<path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+  alertTriangle:'<path d="M12 3l10 18H2L12 3z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/>',
+  clipboardCheck:'<rect x="6" y="4" width="12" height="17" rx="1.5"/><rect x="9" y="2.4" width="6" height="3" rx="0.6"/><path d="M9 12.2l2 2 4-4"/>',
+  box:'<path d="M3 8l9-5 9 5-9 5-9-5z"/><path d="M3 8v9l9 5 9-5V8"/><line x1="12" y1="13" x2="12" y2="22"/>',
+  link2:'<circle cx="8.3" cy="12" r="4"/><circle cx="15.7" cy="12" r="4"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="8.4" r="2.3"/><path d="M15.4 20c0-2.2 1-3.7 2.8-4.3"/>',
+  bell:'<path d="M6 16v-5a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="21" y2="21"/>',
+  wrench:'<path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/>',
+  userCheck:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M16 11.5l2 2 4-4"/>',
+  cloud:'<path d="M7 18a4 4 0 010-8 5 5 0 019.6-1.5A4.5 4.5 0 0118 18H7z"/>',
+  book:'<path d="M4 5a2 2 0 012-2h6v18H6a2 2 0 00-2 2V5z"/><path d="M20 5a2 2 0 00-2-2h-6v18h6a2 2 0 012 2V5z"/>',
+  barChart:'<line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="19" y1="20" x2="19" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M4.5 12a7.5 7.5 0 01.3-2.1L2.6 8.4l1.8-3.1 2.3.9a7.5 7.5 0 013.6-2.1L10.8 2h3.4l.5 2.1a7.5 7.5 0 013.6 2.1l2.3-.9 1.8 3.1-2.2 1.5a7.5 7.5 0 010 4.2l2.2 1.5-1.8 3.1-2.3-.9a7.5 7.5 0 01-3.6 2.1l-.5 2.1h-3.4l-.5-2.1a7.5 7.5 0 01-3.6-2.1l-2.3.9-1.8-3.1 2.2-1.5A7.5 7.5 0 014.5 12z"/>',
+  download:'<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/>',
+  moon:'<path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 10.5z"/>',
+  sun:'<circle cx="12" cy="12" r="4.2"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/><line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.4" y2="4.6"/>',
+  maximize:'<path d="M8 3H4v4"/><path d="M16 3h4v4"/><path d="M8 21H4v-4"/><path d="M16 21h4v-4"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.7 2.7 0 015.2.9c0 1.9-2.6 2.1-2.6 4"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="1.5"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="12.5"/><line x1="12" y1="12.5" x2="15.5" y2="14.5"/>',
+  refresh:'<path d="M20 11a8 8 0 00-14.6-4.6M4 4v5h5"/><path d="M4 13a8 8 0 0014.6 4.6M20 20v-5h-5"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  pencil:'<path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  x:'<line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>',
+  chevronLeft:'<path d="M15 6l-6 6 6 6"/>',
+  checkCircle:'<circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16 9.3"/>',
+  gauge:'<path d="M4.2 15a7.8 7.8 0 1115.6 0"/><line x1="12" y1="15" x2="15.2" y2="9.8"/>',
+};
+function ic(name, extra){
+  return `<svg class="icon ${extra||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||''}</svg>`;
+}
+
+/* ============================================================
+   i18n
+============================================================ */
+const t = {
+  th:{
+    brand1:"ทะเบียนเอกสาร", brand2:"ระบบควบคุมเอกสาร",
+    searchPlaceholder:"ค้นหาเอกสาร นโยบาย ตัวควบคุม...",
+    switchSystem:"ระบบมาตรฐาน",
+    navSection:"เมนูหลัก", navSection2:"อื่น ๆ",
+    nav_dashboard:"ภาพรวม", nav_documents:"เอกสารทั้งหมด", nav_policies:"นโยบายและขั้นตอน",
+    nav_risk:"ทะเบียนความเสี่ยง", nav_soa:"Statement of Applicability", nav_asset:"บริหารทรัพย์สิน",
+    nav_supplier:"ความปลอดภัยคู่ค้า", nav_training:"อบรมและสร้างความตระหนัก", nav_incident:"บริหารเหตุการณ์ผิดปกติ",
+    nav_audit:"ตรวจสอบภายใน", nav_corrective:"การแก้ไขและป้องกัน", nav_review:"ทบทวนโดยฝ่ายบริหาร",
+    nav_backup:"สำรองและกู้คืนข้อมูล", nav_kb:"คลังความรู้", nav_reports:"รายงานและ KPI", nav_admin:"ตั้งค่าระบบ",
+    collapseMenu:"ย่อเมนู", expandMenu:"ขยายเมนู",
+    footNote:"ข้อมูลตัวอย่างสำหรับสาธิตระบบ",
+    avatarName:"ผู้จัดการงานคุณภาพ", avatarRole:"ผู้ดูแลระบบ",
+    pageTitle:"ทะเบียนเอกสารองค์กร", pageSub:"บริหารและติดตามสถานะเอกสารทั้งหมดในองค์กร",
+    newDoc:"เพิ่มเอกสาร", exportBtn:"ส่งออก",
+    statTotal:"เอกสารทั้งหมด", statApproved:"อนุมัติแล้ว", statReview:"รอทบทวน", statDraft:"ฉบับร่าง/หมดอายุ",
+    trendTotal:"เพิ่มขึ้น 12% จากเดือนที่แล้ว", trendApproved:"เพิ่มขึ้น 2.3% จากเดือนที่แล้ว",
+    trendReview:"เพิ่มขึ้น 5 รายการจากสัปดาห์ก่อน", trendDraft:"ลดลง 3 รายการจากสัปดาห์ก่อน",
+    registerTitle:"ทะเบียนเอกสาร",
+    fCategory:"หมวดหมู่", fStatus:"สถานะ", fDept:"หน่วยงาน",
+    all:"ทั้งหมด", catAll:"ทุกหมวดหมู่",
+    cat_policy:"นโยบาย", cat_procedure:"ขั้นตอนปฏิบัติ", cat_wi:"วิธีปฏิบัติงาน", cat_form:"แบบฟอร์ม", cat_guideline:"แนวปฏิบัติ", cat_record:"บันทึก",
+    dept_infosec:"ความมั่นคงปลอดภัยสารสนเทศ", dept_itops:"ปฏิบัติการไอที", dept_risk:"บริหารความเสี่ยง", dept_hr:"ทรัพยากรบุคคล", dept_proc:"จัดซื้อจัดจ้าง",
+    st_draft:"ฉบับร่าง", st_review:"รอทบทวน", st_approved:"อนุมัติแล้ว", st_expired:"หมดอายุ",
+    colCode:"เลขที่เอกสาร", colTitle:"ชื่อเอกสาร", colCategory:"หมวดหมู่", colDept:"หน่วยงาน", colOwner:"ผู้รับผิดชอบ", colVersion:"ฉบับที่", colStatus:"สถานะ", colReview:"วันทบทวน",
+    showing:"แสดง", of:"จาก", entries:"รายการ",
+    emptyState:"ไม่พบเอกสารที่ตรงกับเงื่อนไขการค้นหา",
+    confirmDelText:"ต้องการลบเอกสารนี้ใช่หรือไม่?", yes:"ลบเอกสาร", cancel:"ยกเลิก",
+    modalNewTitle:"เพิ่มเอกสารใหม่", modalEditTitle:"แก้ไขเอกสาร",
+    labelCode:"เลขที่เอกสาร", labelTitleTh:"ชื่อเอกสาร (ไทย)", labelTitleEn:"ชื่อเอกสาร (อังกฤษ)",
+    labelCategory:"หมวดหมู่", labelDept:"หน่วยงาน", labelOwner:"ผู้รับผิดชอบ", labelVersion:"ฉบับที่",
+    labelStatus:"สถานะ", labelReviewDate:"วันที่ทบทวนถัดไป", labelApprover:"ผู้อนุมัติ", labelIso:"มาตรฐาน ISO",
+    save:"บันทึกเอกสาร",
+    placeholderTitle:"โมดูลนี้อยู่ระหว่างการพัฒนา", placeholderBody:"ส่วนนี้เป็นเพียงตัวอย่างเมนูสำหรับสาธิตโครงสร้างระบบ ยังไม่มีข้อมูลใช้งานจริง",
+    placeholderBtn:"กลับไปที่เอกสารทั้งหมด",
+  },
+  en:{
+    brand1:"Document Register", brand2:"Document Control System",
+    searchPlaceholder:"Search documents, policies, controls...",
+    switchSystem:"Standard System",
+    navSection:"Main Menu", navSection2:"Other",
+    nav_dashboard:"Dashboard", nav_documents:"Document Control", nav_policies:"Policies & Procedures",
+    nav_risk:"Risk Register", nav_soa:"Statement of Applicability", nav_asset:"Asset Management",
+    nav_supplier:"Supplier Security", nav_training:"Training & Awareness", nav_incident:"Incident Management",
+    nav_audit:"Internal Audit", nav_corrective:"Corrective Actions", nav_review:"Management Review",
+    nav_backup:"Backup & DR", nav_kb:"Knowledge Base", nav_reports:"Reports & KPI", nav_admin:"Administration",
+    collapseMenu:"Collapse Menu", expandMenu:"Expand Menu",
+    footNote:"Sample data for demonstration",
+    avatarName:"Compliance Manager", avatarRole:"Administrator",
+    pageTitle:"Corporate Document Register", pageSub:"Manage and track the status of every controlled document",
+    newDoc:"New Document", exportBtn:"Export",
+    statTotal:"Total Documents", statApproved:"Approved", statReview:"Pending Review", statDraft:"Draft / Expired",
+    trendTotal:"12% from last month", trendApproved:"2.3% from last month",
+    trendReview:"5 from last week", trendDraft:"3 fewer than last week",
+    registerTitle:"Document Register",
+    fCategory:"Category", fStatus:"Status", fDept:"Department",
+    all:"All", catAll:"All Categories",
+    cat_policy:"Policy", cat_procedure:"Procedure", cat_wi:"Work Instruction", cat_form:"Form", cat_guideline:"Guideline", cat_record:"Record",
+    dept_infosec:"Information Security", dept_itops:"IT Operations", dept_risk:"Risk Management", dept_hr:"Human Resources", dept_proc:"Procurement",
+    st_draft:"Draft", st_review:"Under Review", st_approved:"Approved", st_expired:"Expired",
+    colCode:"Doc. ID", colTitle:"Title", colCategory:"Category", colDept:"Department", colOwner:"Owner", colVersion:"Version", colStatus:"Status", colReview:"Review Date",
+    showing:"Showing", of:"of", entries:"entries",
+    emptyState:"No documents match the current filters",
+    confirmDelText:"Delete this document?", yes:"Delete", cancel:"Cancel",
+    modalNewTitle:"Add New Document", modalEditTitle:"Edit Document",
+    labelCode:"Document ID", labelTitleTh:"Title (Thai)", labelTitleEn:"Title (English)",
+    labelCategory:"Category", labelDept:"Department", labelOwner:"Owner", labelVersion:"Version",
+    labelStatus:"Status", labelReviewDate:"Next Review Date", labelApprover:"Approver", labelIso:"ISO Standard",
+    save:"Save Document",
+    placeholderTitle:"This module is a preview", placeholderBody:"This menu item is shown to illustrate the system's structure and isn't wired up with real data yet.",
+    placeholderBtn:"Back to Document Control",
+  }
+};
+function L(key){ return t[state.lang][key] ?? key; }
+const CATS = ["policy","procedure","wi","form","guideline","record"];
+const DEPTS = ["infosec","itops","risk","hr","proc"];
+const STATUSES = ["draft","review","approved","expired"];
+function catLabel(c){ return L("cat_"+c); }
+function deptLabel(d){ return L("dept_"+d); }
+function statusLabel(s){ return L("st_"+s); }
+
+const ISO_STANDARDS = [
+  {id:"iso27001", num:"27001", prefix:"DOC-27001",
+    nameTh:"ระบบความมั่นคงปลอดภัยสารสนเทศ", nameEn:"Information Security", tag:"ISO/IEC 27001"},
+  {id:"iso9001", num:"9001", prefix:"DOC-9001",
+    nameTh:"ระบบบริหารคุณภาพ", nameEn:"Quality Management", tag:"ISO 9001"},
+  {id:"iso14001", num:"14001", prefix:"DOC-14001",
+    nameTh:"ระบบการจัดการสิ่งแวดล้อม", nameEn:"Environmental Management", tag:"ISO 14001"},
+  {id:"iso45001", num:"45001", prefix:"DOC-45001",
+    nameTh:"อาชีวอนามัยและความปลอดภัย", nameEn:"Occupational Health & Safety", tag:"ISO 45001"},
+  {id:"iso22301", num:"22301", prefix:"DOC-22301",
+    nameTh:"ความต่อเนื่องทางธุรกิจ", nameEn:"Business Continuity", tag:"ISO 22301"},
+];
+function currentStandard(){ return ISO_STANDARDS.find(s=>s.id===state.currentIso); }
+
+const NAV_ITEMS = [
+  {id:"documents", icon:"fileText", enabled:true},
+  {id:"policies", icon:"shieldCheck"},
+  {id:"risk", icon:"alertTriangle"},
+  {id:"soa", icon:"clipboardCheck"},
+  {id:"asset", icon:"box"},
+  {id:"supplier", icon:"link2"},
+  {id:"training", icon:"users"},
+  {id:"incident", icon:"bell"},
+  {id:"audit", icon:"search"},
+  {id:"corrective", icon:"wrench"},
+  {id:"review", icon:"userCheck"},
+  {id:"backup", icon:"cloud"},
+  {id:"kb", icon:"book"},
+  {id:"reports", icon:"barChart"},
+  {id:"admin", icon:"settings"},
+];
+
+/* ============================================================
+   State
+============================================================ */
+let state = {
+  lang:"th",
+  dark:false,
+  railCollapsed:false,
+  currentIso:"iso27001",
+  activeModule:"documents",
+  filters:{category:"all", status:"all", dept:"all", search:""},
+  modal:null,
+  confirmDeleteId:null,
+  nextSeq:112,
+  docs:[
+    {id:1, iso:"iso27001", code:"DOC-27001-001", title:{th:"นโยบายความมั่นคงปลอดภัยสารสนเทศ", en:"Information Security Policy"}, category:"policy", dept:"infosec", owner:"Jane Smith", version:"3.1", status:"approved", reviewDate:"2024-06-15", approver:"Michael Tan"},
+    {id:2, iso:"iso27001", code:"PROC-27001-014", title:{th:"ขั้นตอนควบคุมการเข้าถึงระบบ", en:"Access Control Procedure"}, category:"procedure", dept:"itops", owner:"David Lee", version:"2.0", status:"review", reviewDate:"2024-05-28", approver:"Sarah Wong"},
+    {id:3, iso:"iso27001", code:"WORK-27001-022", title:{th:"ขั้นตอนประเมินความเสี่ยงคู่ค้า", en:"Vendor Risk Assessment Workflow"}, category:"wi", dept:"proc", owner:"Priya Nair", version:"1.2", status:"draft", reviewDate:"2024-06-10", approver:"—"},
+    {id:4, iso:"iso27001", code:"FORM-27001-045", title:{th:"แบบฟอร์มขอสิทธิ์การเข้าถึง", en:"Access Request Form"}, category:"form", dept:"itops", owner:"Jason Koh", version:"2.3", status:"approved", reviewDate:"2024-07-05", approver:"Michael Tan"},
+    {id:5, iso:"iso27001", code:"GUIDE-27001-007", title:{th:"แนวปฏิบัติการจัดการเหตุการณ์ผิดปกติ", en:"Incident Management Guide"}, category:"guideline", dept:"infosec", owner:"Emily Chen", version:"1.4", status:"approved", reviewDate:"2024-06-20", approver:"Michael Tan"},
+    {id:6, iso:"iso27001", code:"POL-27001-009", title:{th:"นโยบายการใช้งานทรัพยากรสารสนเทศ", en:"Acceptable Use Policy"}, category:"policy", dept:"infosec", owner:"Jane Smith", version:"2.2", status:"approved", reviewDate:"2024-05-30", approver:"Sarah Wong"},
+    {id:7, iso:"iso27001", code:"PROC-27001-028", title:{th:"ขั้นตอนบริหารการเปลี่ยนแปลง", en:"Change Management Procedure"}, category:"procedure", dept:"itops", owner:"Tom Anderson", version:"1.1", status:"expired", reviewDate:"2024-05-10", approver:"Michael Tan"},
+    {id:8, iso:"iso27001", code:"REC-27001-051", title:{th:"บันทึกการประเมินความเสี่ยง", en:"Risk Assessment Record"}, category:"record", dept:"risk", owner:"Priya Nair", version:"1.0", status:"approved", reviewDate:"2024-06-30", approver:"Sarah Wong"},
+    {id:9, iso:"iso27001", code:"REC-27001-060", title:{th:"หลักฐานการอบรมด้านความปลอดภัย", en:"Security Awareness Training Record"}, category:"record", dept:"hr", owner:"Napat S.", version:"1.0", status:"draft", reviewDate:"2024-07-12", approver:"—"},
+
+    {id:20, iso:"iso9001", code:"DOC-9001-001", title:{th:"คู่มือระบบบริหารคุณภาพ", en:"Quality Management System Manual"}, category:"policy", dept:"itops", owner:"Suda P.", version:"4.0", status:"approved", reviewDate:"2024-06-01", approver:"Michael Tan"},
+    {id:21, iso:"iso9001", code:"PROC-9001-011", title:{th:"ขั้นตอนควบคุมเอกสารและบันทึก", en:"Control of Documents and Records Procedure"}, category:"procedure", dept:"itops", owner:"Kittipong R.", version:"2.1", status:"review", reviewDate:"2024-06-18", approver:"Sarah Wong"},
+    {id:22, iso:"iso9001", code:"REC-9001-034", title:{th:"บันทึกผลการตรวจสอบภายใน", en:"Internal Audit Record"}, category:"record", dept:"risk", owner:"Suda P.", version:"1.0", status:"draft", reviewDate:"2024-07-02", approver:"—"},
+
+    {id:30, iso:"iso14001", code:"DOC-14001-001", title:{th:"นโยบายสิ่งแวดล้อม", en:"Environmental Policy"}, category:"policy", dept:"infosec", owner:"Anan T.", version:"2.0", status:"approved", reviewDate:"2024-06-05", approver:"Michael Tan"},
+    {id:31, iso:"iso14001", code:"PROC-14001-009", title:{th:"ขั้นตอนการจัดการของเสีย", en:"Waste Management Procedure"}, category:"procedure", dept:"itops", owner:"Anan T.", version:"1.3", status:"approved", reviewDate:"2024-05-22", approver:"Sarah Wong"},
+    {id:32, iso:"iso14001", code:"REC-14001-018", title:{th:"บันทึกการติดตามการใช้พลังงาน", en:"Energy Monitoring Record"}, category:"record", dept:"risk", owner:"Napat S.", version:"1.0", status:"expired", reviewDate:"2024-04-30", approver:"Michael Tan"},
+
+    {id:40, iso:"iso45001", code:"DOC-45001-001", title:{th:"นโยบายอาชีวอนามัยและความปลอดภัย", en:"Occupational Health & Safety Policy"}, category:"policy", dept:"hr", owner:"Ratchanee K.", version:"2.2", status:"approved", reviewDate:"2024-06-12", approver:"Michael Tan"},
+    {id:41, iso:"iso45001", code:"WORK-45001-016", title:{th:"วิธีปฏิบัติงานเมื่อเกิดอุบัติเหตุ", en:"Accident Response Work Instruction"}, category:"wi", dept:"hr", owner:"Ratchanee K.", version:"1.1", status:"review", reviewDate:"2024-05-27", approver:"Sarah Wong"},
+    {id:42, iso:"iso45001", code:"FORM-45001-027", title:{th:"แบบฟอร์มรายงานเหตุการณ์ไม่ปลอดภัย", en:"Unsafe Event Report Form"}, category:"form", dept:"hr", owner:"Kittipong R.", version:"1.0", status:"draft", reviewDate:"2024-07-08", approver:"—"},
+
+    {id:50, iso:"iso22301", code:"DOC-22301-001", title:{th:"นโยบายความต่อเนื่องทางธุรกิจ", en:"Business Continuity Policy"}, category:"policy", dept:"risk", owner:"David Lee", version:"1.4", status:"approved", reviewDate:"2024-06-08", approver:"Michael Tan"},
+    {id:51, iso:"iso22301", code:"GUIDE-22301-006", title:{th:"แนวปฏิบัติแผนกู้คืนระบบ", en:"Disaster Recovery Guideline"}, category:"guideline", dept:"itops", owner:"David Lee", version:"1.0", status:"review", reviewDate:"2024-05-25", approver:"Sarah Wong"},
+  ]
+};
+
+/* ============================================================
+   Helpers
+============================================================ */
+function scopedDocs(){ return state.docs.filter(d=>d.iso===state.currentIso); }
+function filteredDocs(){
+  const f = state.filters;
+  return scopedDocs().filter(d=>{
+    if(f.category!=="all" && d.category!==f.category) return false;
+    if(f.status!=="all" && d.status!==f.status) return false;
+    if(f.dept!=="all" && d.dept!==f.dept) return false;
+    if(f.search){
+      const q = f.search.toLowerCase();
+      const hay = (d.code+" "+d.title.th+" "+d.title.en+" "+d.owner).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function stats(){
+  const docs = scopedDocs();
+  return {
+    total: docs.length,
+    approved: docs.filter(d=>d.status==="approved").length,
+    review: docs.filter(d=>d.status==="review").length,
+    draftExpired: docs.filter(d=>d.status==="draft"||d.status==="expired").length,
+  };
+}
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d = new Date(iso+"T00:00:00");
+  if(state.lang==="th"){
+    const m=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+    return d.getDate()+" "+m[d.getMonth()]+" "+(d.getFullYear()+543);
+  }
+  const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return m[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear();
+}
+function nowStr(){
+  const d = new Date();
+  const dateStr = fmtDate(d.toISOString().slice(0,10));
+  let h = d.getHours(), ampm = h>=12?"PM":"AM"; h = h%12 || 12;
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  return {date:dateStr, time:h+":"+mm+" "+ampm};
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function exportCsv(){
+  const docs = filteredDocs();
+  const header = ["Code","Title (TH)","Title (EN)","Category","Department","Owner","Version","Status","Review Date","Approver"];
+  const rows = docs.map(d=>[d.code,d.title.th,d.title.en,catLabel(d.category),deptLabel(d.dept),d.owner,d.version,statusLabel(d.status),d.reviewDate,d.approver]);
+  const csv = [header, ...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = currentStandard().prefix+"-documents.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   Render
+============================================================ */
+function render(){
+  const app = document.getElementById("app");
+  const std = currentStandard();
+  const time = nowStr();
+
+  app.innerHTML = `
+    <div class="rail ${state.railCollapsed?'collapsed':''}">
+      <div class="rail-brand">
+        <div class="mark">${ic("shieldCheck")}</div>
+        <div class="rail-brand-text">
+          <h1>${std.tag}</h1>
+          <p>${L("brand2")}</p>
+        </div>
+      </div>
+
+      <div class="iso-select-wrap">
+        <select id="isoSwitcher" class="iso-select">
+          ${ISO_STANDARDS.map(o=>`<option value="${o.id}" ${o.id===state.currentIso?'selected':''}>${o.tag} — ${state.lang==="th"?o.nameTh:o.nameEn}</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="rail-nav">
+        <div class="rail-section-label">${L("navSection")}</div>
+        ${NAV_ITEMS.map(n=>`
+          <div class="rail-item ${state.activeModule===n.id?'active':''}" data-nav="${n.id}" title="${L('nav_'+n.id)}">
+            ${ic(n.icon)}<span class="rail-label">${L('nav_'+n.id)}</span>
+          </div>`).join("")}
+      </div>
+
+      <div class="rail-foot">
+        <button class="rail-collapse-btn" id="railToggle">
+          ${ic("chevronLeft")}<span class="rail-label">${state.railCollapsed?L('expandMenu'):L('collapseMenu')}</span>
+        </button>
+        <div class="rail-foot-text">${L("footNote")}</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <button class="icon-btn" id="railToggleMobile">${ic("menu")}</button>
+        <div class="search-wrap">
+          ${ic("search")}
+          <input type="text" id="topSearch" placeholder="${L('searchPlaceholder')}" value="${escapeHtml(state.filters.search)}">
+          <span class="kbd">Ctrl+K</span>
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="lang-toggle" id="langToggle">
+          <button data-lang="th" class="${state.lang==='th'?'active':''}">ไทย</button>
+          <button data-lang="en" class="${state.lang==='en'?'active':''}">EN</button>
+        </div>
+        <button class="icon-btn" id="btnDark" title="Theme">${ic(state.dark?"sun":"moon")}</button>
+        <button class="icon-btn" id="btnFullscreen" title="Fullscreen">${ic("maximize")}</button>
+        <button class="icon-btn" id="btnBell">${ic("bell")}<span class="badge">${scopedDocs().filter(d=>d.status==='review').length}</span></button>
+        <button class="icon-btn" id="btnMail">${ic("mail")}<span class="badge">8</span></button>
+        <button class="icon-btn" id="btnHelp">${ic("help")}</button>
+        <div class="avatar-block">
+          <div class="avatar">CM</div>
+          <div>
+            <div class="avatar-name">${L("avatarName")}</div>
+            <div class="avatar-role">${L("avatarRole")}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        ${state.activeModule === "documents" ? documentsPageHtml(std, time) : placeholderHtml()}
+      </div>
+    </div>
+
+    ${state.modal ? modalHtml() : ""}
+  `;
+
+  attachEvents();
+}
+
+function documentsPageHtml(std, time){
+  const docs = filteredDocs();
+  const s = stats();
+  return `
+    <div class="page-head">
+      <div>
+        <h2>${L("pageTitle")}</h2>
+        <div class="sub">${L("pageSub")} · ${state.lang==="th"?std.nameTh:std.nameEn}</div>
+      </div>
+      <div class="page-meta">
+        <div class="mi">${ic("calendar","icon-sm")}${time.date}</div>
+        <div class="mi">${ic("clock","icon-sm")}${time.time}</div>
+        <button class="icon-btn" id="btnRefresh" style="width:32px;height:32px;">${ic("refresh","icon-sm")}</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon blue">${ic("fileText")}</div></div>
+        <div class="stat-label">${L("statTotal")}</div>
+        <div class="stat-value">${s.total}</div>
+        <div class="stat-trend up">↑ <b>${L("trendTotal")}</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon orange">${ic("clock")}</div></div>
+        <div class="stat-label">${L("statReview")}</div>
+        <div class="stat-value">${s.review}</div>
+        <div class="stat-trend up">↑ <b>${L("trendReview")}</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon green">${ic("checkCircle")}</div></div>
+        <div class="stat-label">${L("statApproved")}</div>
+        <div class="stat-value">${s.total ? Math.round(s.approved/s.total*100) : 0}%</div>
+        <div class="stat-trend up">↑ <b>${L("trendApproved")}</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon red">${ic("alertTriangle")}</div></div>
+        <div class="stat-label">${L("statDraft")}</div>
+        <div class="stat-value">${s.draftExpired}</div>
+        <div class="stat-trend down">↓ <b>${L("trendDraft")}</b></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>${L("registerTitle")}</h3>
+        <div class="filters">
+          <select class="sel" id="fCategory">
+            <option value="all">${L("catAll")}</option>
+            ${CATS.map(c=>`<option value="${c}" ${state.filters.category===c?'selected':''}>${catLabel(c)}</option>`).join("")}
+          </select>
+          <select class="sel" id="fStatus">
+            <option value="all">${L("all")}</option>
+            ${STATUSES.map(st=>`<option value="${st}" ${state.filters.status===st?'selected':''}>${statusLabel(st)}</option>`).join("")}
+          </select>
+          <select class="sel" id="fDept">
+            <option value="all">${L("all")}</option>
+            ${DEPTS.map(d=>`<option value="${d}" ${state.filters.dept===d?'selected':''}>${deptLabel(d)}</option>`).join("")}
+          </select>
+          <button class="btn ghost sm" id="btnExport">${ic("download","icon-sm")}${L("exportBtn")}</button>
+          <button class="btn sm" id="btnNew">${ic("plus","icon-sm")}${L("newDoc")}</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>${L("colCode")}</th><th>${L("colTitle")}</th><th>${L("colCategory")}</th>
+            <th>${L("colDept")}</th><th>${L("colOwner")}</th><th>${L("colVersion")}</th>
+            <th>${L("colStatus")}</th><th>${L("colReview")}</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${docs.length ? docs.map(rowHtml).join("") : ""}
+        </tbody>
+      </table>
+      ${docs.length===0 ? `<div class="empty">${ic("fileText")}<div>${L("emptyState")}</div></div>` : ""}
+      <div class="panel-foot">
+        <span>${L("showing")} ${docs.length} ${L("of")} ${scopedDocs().length} ${L("entries")}</span>
+      </div>
+    </div>
+  `;
+}
+
+function placeholderHtml(){
+  const n = NAV_ITEMS.find(x=>x.id===state.activeModule);
+  return `
+    <div class="placeholder">
+      <div class="icon-wrap">${ic(n.icon)}</div>
+      <h3>${L('nav_'+n.id)}</h3>
+      <p>${L("placeholderBody")}</p>
+      <button class="btn" id="btnBackToDocs">${L("placeholderBtn")}</button>
+    </div>
+  `;
+}
+
+function rowHtml(d){
+  if(state.confirmDeleteId === d.id){
+    return `
+      <tr class="confirm-row">
+        <td colspan="9">
+          <div class="confirm-box">
+            <span>${L("confirmDelText")}</span>
+            <button class="btn danger sm" data-action="confirmDelete" data-id="${d.id}">${L("yes")}</button>
+            <button class="btn ghost sm" data-action="cancelDelete">${L("cancel")}</button>
+          </div>
+        </td>
+      </tr>`;
+  }
+  const title = state.lang==="th" ? d.title.th : d.title.en;
+  const secTitle = state.lang==="th" ? d.title.en : d.title.th;
+  return `
+    <tr>
+      <td><span class="doc-code">${escapeHtml(d.code)}</span></td>
+      <td><div class="doc-title">${escapeHtml(title)}<span class="sec">${escapeHtml(secTitle)}</span></div></td>
+      <td>${catLabel(d.category)}</td>
+      <td>${deptLabel(d.dept)}</td>
+      <td>${escapeHtml(d.owner)}</td>
+      <td>${escapeHtml(d.version)}</td>
+      <td><span class="pill ${d.status}"><span class="pill-dot"></span>${statusLabel(d.status)}</span></td>
+      <td>${fmtDate(d.reviewDate)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="edit" data-id="${d.id}">${ic("pencil","icon-sm")}</button>
+          <button class="icon-btn" data-action="askDelete" data-id="${d.id}">${ic("trash","icon-sm")}</button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+function modalHtml(){
+  const isEdit = state.modal.mode === "edit";
+  const std = currentStandard();
+  const d = isEdit ? state.docs.find(x=>x.id===state.modal.id) : {
+    iso: state.currentIso,
+    code: std.prefix+"-"+String(state.nextSeq).padStart(3,"0"),
+    title:{th:"",en:""}, category:"policy", dept:"infosec",
+    owner:"", version:"1.0", status:"draft", reviewDate:"", approver:""
+  };
+  return `
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>${isEdit ? L("modalEditTitle") : L("modalNewTitle")}</h3>
+          <button class="icon-btn" id="modalClose">${ic("x","icon-sm")}</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>${L("labelIso")}</label>
+              <select id="f_iso">${ISO_STANDARDS.map(o=>`<option value="${o.id}" ${d.iso===o.id?'selected':''}>${o.tag} — ${state.lang==="th"?o.nameTh:o.nameEn}</option>`).join("")}</select>
+            </div>
+            <div class="field"><label>${L("labelCode")}</label><input id="f_code" value="${escapeHtml(d.code)}"></div>
+            <div class="field full"><label>${L("labelTitleTh")}</label><input id="f_title_th" value="${escapeHtml(d.title.th)}"></div>
+            <div class="field full"><label>${L("labelTitleEn")}</label><input id="f_title_en" value="${escapeHtml(d.title.en)}"></div>
+            <div class="field">
+              <label>${L("labelCategory")}</label>
+              <select id="f_category">${CATS.map(c=>`<option value="${c}" ${d.category===c?'selected':''}>${catLabel(c)}</option>`).join("")}</select>
+            </div>
+            <div class="field">
+              <label>${L("labelDept")}</label>
+              <select id="f_dept">${DEPTS.map(x=>`<option value="${x}" ${d.dept===x?'selected':''}>${deptLabel(x)}</option>`).join("")}</select>
+            </div>
+            <div class="field"><label>${L("labelOwner")}</label><input id="f_owner" value="${escapeHtml(d.owner)}"></div>
+            <div class="field"><label>${L("labelVersion")}</label><input id="f_version" value="${escapeHtml(d.version)}"></div>
+            <div class="field"><label>${L("labelApprover")}</label><input id="f_approver" value="${escapeHtml(d.approver)}"></div>
+            <div class="field">
+              <label>${L("labelStatus")}</label>
+              <select id="f_status">${STATUSES.map(st=>`<option value="${st}" ${d.status===st?'selected':''}>${statusLabel(st)}</option>`).join("")}</select>
+            </div>
+            <div class="field"><label>${L("labelReviewDate")}</label><input type="date" id="f_reviewDate" value="${d.reviewDate||''}"></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" id="modalCancel">${L("cancel")}</button>
+          <button class="btn" id="modalSave">${L("save")}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   Events
+============================================================ */
+function attachEvents(){
+  const byId = id => document.getElementById(id);
+
+  document.querySelectorAll("#langToggle button").forEach(b=>{
+    b.addEventListener("click", ()=>{ state.lang = b.dataset.lang; render(); });
+  });
+
+  byId("isoSwitcher").addEventListener("change", e=>{
+    state.currentIso = e.target.value;
+    state.filters = {category:"all", status:"all", dept:"all", search:""};
+    state.confirmDeleteId = null;
+    render();
+  });
+
+  byId("railToggle").addEventListener("click", ()=>{ state.railCollapsed = !state.railCollapsed; render(); });
+  const mobileToggle = byId("railToggleMobile");
+  if(mobileToggle) mobileToggle.addEventListener("click", ()=>{
+    document.querySelector(".rail").classList.toggle("open");
+  });
+
+  byId("btnDark").addEventListener("click", ()=>{
+    state.dark = !state.dark;
+    document.body.classList.toggle("dark", state.dark);
+    render();
+  });
+
+  byId("btnFullscreen").addEventListener("click", ()=>{
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+    else{ document.exitFullscreen?.(); }
+  });
+
+  document.querySelectorAll('[data-nav]').forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.activeModule = el.dataset.nav;
+      state.confirmDeleteId = null;
+      render();
+    });
+  });
+
+  const topSearch = byId("topSearch");
+  if(topSearch){
+    topSearch.addEventListener("input", e=>{
+      state.filters.search = e.target.value;
+      render();
+      const el = byId("topSearch");
+      if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    });
+  }
+
+  const backBtn = byId("btnBackToDocs");
+  if(backBtn) backBtn.addEventListener("click", ()=>{ state.activeModule = "documents"; render(); });
+
+  if(state.activeModule === "documents"){
+    byId("fCategory").addEventListener("change", e=>{ state.filters.category = e.target.value; render(); });
+    byId("fStatus").addEventListener("change", e=>{ state.filters.status = e.target.value; render(); });
+    byId("fDept").addEventListener("change", e=>{ state.filters.dept = e.target.value; render(); });
+    byId("btnNew").addEventListener("click", ()=>{ state.modal = {mode:"new"}; render(); });
+    byId("btnExport").addEventListener("click", exportCsv);
+    const refreshBtn = byId("btnRefresh");
+    if(refreshBtn) refreshBtn.addEventListener("click", render);
+
+    document.querySelectorAll('[data-action="edit"]').forEach(b=>{
+      b.addEventListener("click", ()=>{ state.modal = {mode:"edit", id:Number(b.dataset.id)}; render(); });
+    });
+    document.querySelectorAll('[data-action="askDelete"]').forEach(b=>{
+      b.addEventListener("click", ()=>{ state.confirmDeleteId = Number(b.dataset.id); render(); });
+    });
+    document.querySelectorAll('[data-action="cancelDelete"]').forEach(b=>{
+      b.addEventListener("click", ()=>{ state.confirmDeleteId = null; render(); });
+    });
+    document.querySelectorAll('[data-action="confirmDelete"]').forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const id = Number(b.dataset.id);
+        state.docs = state.docs.filter(d=>d.id!==id);
+        state.confirmDeleteId = null;
+        render();
+      });
+    });
+  }
+
+  const overlay = byId("overlay");
+  if(overlay){
+    const close = ()=>{ state.modal = null; render(); };
+    byId("modalClose").addEventListener("click", close);
+    byId("modalCancel").addEventListener("click", close);
+    overlay.addEventListener("click", e=>{ if(e.target===overlay) close(); });
+
+    byId("modalSave").addEventListener("click", ()=>{
+      const payload = {
+        iso: byId("f_iso").value,
+        code: byId("f_code").value.trim(),
+        title: { th: byId("f_title_th").value.trim(), en: byId("f_title_en").value.trim() },
+        category: byId("f_category").value,
+        dept: byId("f_dept").value,
+        owner: byId("f_owner").value.trim(),
+        version: byId("f_version").value.trim(),
+        status: byId("f_status").value,
+        reviewDate: byId("f_reviewDate").value,
+        approver: byId("f_approver").value.trim() || "—",
+      };
+      if(!payload.title.th && !payload.title.en) return;
+
+      if(state.modal.mode === "edit"){
+        const idx = state.docs.findIndex(d=>d.id===state.modal.id);
+        state.docs[idx] = {...state.docs[idx], ...payload};
+      } else {
+        state.docs.unshift({ id: Date.now(), ...payload });
+        state.nextSeq++;
+      }
+      state.modal = null;
+      render();
+    });
+  }
+}
+
+document.addEventListener("keydown", e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){
+    e.preventDefault();
+    const el = document.getElementById("topSearch");
+    if(el) el.focus();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
